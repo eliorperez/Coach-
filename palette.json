@@ -1,0 +1,27 @@
+{
+  "push": {
+    "name": "red",
+    "hex": "#FF6B60",
+    "contrast": 7.08
+  },
+  "pull": {
+    "name": "blue",
+    "hex": "#0DABFF",
+    "contrast": 7.8
+  },
+  "legs": {
+    "name": "purple",
+    "hex": "#BE7DFF",
+    "contrast": 7.13
+  },
+  "upper": {
+    "name": "orange",
+    "hex": "#E88600",
+    "contrast": 7.38
+  },
+  "lower": {
+    "name": "green",
+    "hex": "#00C24E",
+    "contrast": 8.31
+  }
+}
