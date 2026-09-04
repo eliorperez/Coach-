@@ -239,6 +239,11 @@ function vToday() {
         tiles.slice(0, 4).join('') +
       '</div>' +
       '<div class="pad" style="padding-top:10px">' + tiles[4] + '</div>' +
+      (installPrompt && !isStandalone()
+        ? '<div class="installbar" style="margin-top:18px"><button class="btn btn-dark" data-install="1" style="height:52px;font-size:16px">' +
+          'Install Coach! on this phone</button>' +
+          '<div class="faint" style="text-align:center;margin-top:8px">Adds it to your app drawer. Works offline.</div></div>'
+        : '') +
       '<div style="height:24px"></div>' +
       '</div>' + tabbar('today') + '</div>';
   }
@@ -659,7 +664,7 @@ function render() {
 document.addEventListener('click', function (ev) {
   const t = ev.target.closest('[data-go],[data-pick-day],[data-toggle-ex],[data-filter],[data-open-ex],' +
     '[data-goal],[data-unit],[data-plate],[data-setup-done],[data-step],[data-log],[data-why],' +
-    '[data-first],[data-seed],[data-finish],[data-abandon],[data-lift],[data-sheet],[data-sheet-close],[data-commit]');
+    '[data-first],[data-seed],[data-finish],[data-abandon],[data-lift],[data-sheet],[data-sheet-close],[data-commit],[data-install]');
   if (!t) return;
   const d = t.dataset;
 
@@ -698,7 +703,25 @@ document.addEventListener('click', function (ev) {
   if (d.finish) return finishSession();
   if (d.abandon) { if (confirm('Throw away this session?')) { S.current = null; save(); render(); } return; }
   if (d.lift) { route.lift = d.lift; return render(); }
+  if (d.install) {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    installPrompt.userChoice.then(function (r) {
+      if (r && r.outcome === 'accepted') toast('Installing…');
+      installPrompt = null; render();
+    });
+    return;
+  }
 });
+
+/* ---------- install prompt (Chrome / Samsung Internet on Android) ---------- */
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault(); installPrompt = e; render();
+});
+window.addEventListener('appinstalled', function () { installPrompt = null; render(); });
+const isStandalone = () =>
+  window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
 /* ---------- boot ---------- */
 load();

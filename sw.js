@@ -1,5 +1,5 @@
 /* Coach! service worker — cache-first so the app opens in a gym basement. */
-const CACHE = 'coach-v1';
+const CACHE = 'coach-v2';
 const CORE = ['./', './index.html', './app.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
