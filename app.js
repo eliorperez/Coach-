@@ -142,6 +142,7 @@ const I = {
   history: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3.2 2"/>',
   progress:'<path d="M3.5 16.5l5.5-5.5 3.5 3.5 8-8"/><path d="M16.5 6.5h4v4"/>',
   back:    '<path d="M15 18l-6-6 6-6"/>',
+  home:    '<path d="M19 12H5M11 6l-6 6 6 6"/>',
   fwd:     '<path d="M9 6l6 6-6 6"/>',
   plus:    '<path d="M12 5v14M5 12h14"/>',
   check:   '<path d="M20 6L9 17l-5-5"/>',
@@ -197,9 +198,13 @@ function vSetup() {
     (on ? '700' : '600') + ';font-size:15px;' + (on ? 'background:#0A0A0A;color:#fff' : 'background:#fff;color:var(--muted);border:1px solid var(--hair)') + '">' + label + '</button>';
   const plates = s.unit === 'kg' ? [1.25, 2.5, 5] : [2.5, 5, 10];
 
+  const revisit = S.settings.setupDone;
   return '<div class="view on">' +
     '<div class="scroll">' +
-    '<div class="top"><div class="mark" style="font-size:22px">COACH!</div></div>' +
+    '<div class="top">' +
+      (revisit ? '<button data-go="today" aria-label="Back to today" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;margin-left:-10px">' +
+        svg('home', 22, '#0A0A0A', 2.3) + '</button>' : '<div class="mark" style="font-size:22px">COACH!</div>') +
+    '</div>' +
     '<div class="pad" style="padding-top:20px"><div class="h1">Two questions and<br>we\'re training.</div></div>' +
     '<div class="pad" style="padding-top:26px"><div class="eyebrow" style="color:var(--faint)">What are you after</div>' +
     '<div class="list" style="margin-top:13px">' + goalCard('stronger') + goalCard('bigger') + '</div></div>' +
@@ -211,7 +216,7 @@ function vSetup() {
       plates.map(p => pill(p + ' ' + s.unit, Math.abs(p - s.plate) < 0.01, 'data-plate="' + p + '"')).join('') + '</div>' +
     '<div class="sub" style="margin-top:12px">So Coach never asks you for a weight you can\'t load.</div></div>' +
     '<div style="height:24px"></div></div>' +
-    '<div class="footer"><button class="btn btn-dark" data-setup-done="1">Start training</button></div></div>';
+    '<div class="footer"><button class="btn btn-dark" data-setup-done="1">' + (revisit ? 'Done' : 'Start training') + '</button></div></div>';
 }
 
 /* ---------- view: today ---------- */
@@ -347,11 +352,18 @@ function vCoach() {
     ['stronger','bigger'].map(k => '<button role="tab" aria-selected="' + (S.settings.goal === k) + '" data-goal="' + k + '">' +
       (k === 'stronger' ? 'Stronger' : 'Bigger') + '</button>').join('') + '</div>';
 
-  const nav = '<div class="top" style="padding-left:20px;padding-right:20px">' +
-    '<button data-step="-1" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center">' + svg('back', 21, '#0A0A0A', 2.4) + '</button>' +
-    '<div style="text-align:center" class="grow"><div class="clip" style="font-family:Outfit,sans-serif;font-size:17px;font-weight:700">' + esc(p.ex.name) + '</div>' +
-    '<div class="faint" style="font-size:12px">' + (cur.idx + 1) + ' of ' + cur.exIds.length + '</div></div>' +
-    '<button data-step="1" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center">' + svg('fwd', 21, '#0A0A0A', 2.4) + '</button></div>';
+  const only = cur.exIds.length === 1;
+  const stepBtn = (dir, icon, disabled) =>
+    '<button ' + (disabled ? '' : 'data-step="' + dir + '" ') + 'aria-label="' + (dir === 1 ? 'Next' : 'Previous') + ' exercise" ' +
+    'style="width:38px;height:44px;display:flex;align-items:center;justify-content:center' + (disabled ? ';opacity:.25' : '') + '">' +
+    svg(icon, 21, '#0A0A0A', 2.4) + '</button>';
+  const nav = '<div class="top" style="padding-left:14px;padding-right:14px">' +
+    '<button data-go="today" aria-label="Back to today" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center">' +
+      svg('home', 22, '#0A0A0A', 2.3) + '</button>' +
+    '<div style="text-align:center;padding:0 4px" class="grow">' +
+      '<div class="clip" style="font-family:Outfit,sans-serif;font-size:17px;font-weight:700">' + esc(p.ex.name) + '</div>' +
+      '<div class="faint" style="font-size:12px">' + (cur.idx + 1) + ' of ' + cur.exIds.length + '</div></div>' +
+    '<div style="display:flex;flex:0 0 auto">' + stepBtn(-1, 'back', cur.idx === 0 || only) + stepBtn(1, 'fwd', only) + '</div></div>';
 
   if (p.unknown) {
     const f = route.first || { w: 20, r: 8, rir: 2 };
@@ -615,7 +627,8 @@ function stepExercise(dir) {
   const cur = S.current;
   const n = cur.exIds.length;
   const next = cur.idx + dir;
-  if (next < 0 || next >= n) { route.why = false; go('today'); return; }
+  if (next < 0) return;                       // the ← arrow is how you leave
+  if (next >= n) { route.why = false; go('today'); return; }   // past the last one, you're done
   cur.idx = next; route.why = false; save(); render();
 }
 function finishSession() {
